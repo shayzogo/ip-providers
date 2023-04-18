@@ -1,54 +1,31 @@
 <?php
 
-class GeolocationService
-{
-	/**
-	 * The list of geolocation providers to use.
-	 *
-	 * @var array An array of objects that implement the GeolocationProviderInterface.
-	 */
+class GeolocationService {
+
 	private $providers;
 
-	/**
-	 * Constructs a new GeolocationService object.
-	 *
-	 * @param array $providers An array of objects that implement the GeolocationProviderInterface.
-	 */
-	public function __construct(array $providers)
-	{
+	public function __construct(array $providers) {
 		$this->providers = $providers;
 	}
 
-	/**
-	 * Retrieves geolocation data for the specified IP address from the available providers.
-	 *
-	 * @param string $ip The IP address to retrieve geolocation data for.
-	 *
-	 * @return array An array containing geolocation data, or throws an exception if geolocation data is not available.
-	 *
-	 * @throws Exception If geolocation data cannot be retrieved from any of the available providers.
-	 */
-	public function getGeolocationData(string $ip): array
-	{
-		$geolocationDataList = array_map(function ($provider) use ($ip) {
-			try {
-				$geolocationData = $provider->getGeolocationData($ip);
-				if ($provider->isGeolocationDataValid($geolocationData)) { // If failed go to the next one
-					return $geolocationData; // If not return
-				}
-			} catch (Exception $e) {
-				// log the error and continue to the next provider
+	public function getGeolocationData(): array {
+		$validGeolocationData = array_reduce($this->providers, function ($carry, GeolocationProviderInterface $provider) {
+			if ($carry) {
+				return $carry;
 			}
-		}, $this->providers);
+			try {
+				return $provider->getGeolocationData();
+			} catch (Exception $e) {
+				error_log("Error retrieving geolocation data from provider " . get_class($provider) . ": " . $e->getMessage());
+				// continue to the next provider
+			}
+		}, null);
 
-		$validGeolocationDataList = array_filter($geolocationDataList, function ($geolocationData) {
-			return !empty($geolocationData);
-		});
-
-		if (count($validGeolocationDataList) == 0) {
+		if (!$validGeolocationData) {
 			throw new Exception('Unable to get geolocation data from any provider');
 		}
 
-		return $validGeolocationDataList[0];
+		return $validGeolocationData;
 	}
+
 }

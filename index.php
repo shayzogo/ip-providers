@@ -2,14 +2,15 @@
 
 require_once './services/GeolocationService.php';
 
-$ipApi = new IpApi();
-$ipStack = new IpStack();
+$ip = '127.0.0.1';
+$ipApi = new IpApi(getenv('ip-api-key'), $ip);
+$ipStack = new IpStack(getenv('ip-stack-key'), $ip);
 
 $providersArray = [$ipApi, $ipStack];
 $geoLocationService = new GeolocationService($providersArray);
-$ip = '127.0.0.1';
+
 try {
-	$geoLocationData = $geoLocationService->getGeolocationData($ip);
+	$geoLocationData = $geoLocationService->getGeolocationData();
 } catch (Exception $e) {
 	//...
 }
