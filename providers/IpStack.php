@@ -9,15 +9,14 @@ class IpStack implements GeolocationProviderInterface
 	private $ip;
 	private $curlFactory;
 
-	public function __construct(string $apiKey, string $ip)
+	public function __construct(string $apiKey)
 	{
 		$this->apiKey = $apiKey;
-		$this->ip = $ip;
-		$this->curlFactory = new CurlFactory();
 	}
 
-	public function getGeolocationData(): array
+	public function getGeolocationData(string $ip): GeoLocation
 	{
+		// try catch
 		$url = "https://api.ipstack.com/{$this->ip}?access_key={$this->apiKey}";
 		$options = [
 			CURLOPT_TIMEOUT => 10,
@@ -26,10 +25,10 @@ class IpStack implements GeolocationProviderInterface
 		$response = $this->curlFactory->makeRequest($url, 'GET', [], $options);
 
 		if (!$this->isGeolocationDataValid($response)) {
-			throw new Exception('Invalid geolocation data returned from API');
+			throw new \InvalidProviderResponse('%%%');
 		}
 
-		return $response;
+		return new GeoLocation($ip, $response['sss']);
 	}
 
 	public function isGeolocationDataValid(array $geolocationData): bool

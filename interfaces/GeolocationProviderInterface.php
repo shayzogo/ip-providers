@@ -2,8 +2,5 @@
 
 interface GeolocationProviderInterface
 {
-
-	public function getGeolocationData(): array;
-
-	public function isGeolocationDataValid(array $geolocationData): bool;
+	public function getGeolocationData(): GeoLocation;
 }
