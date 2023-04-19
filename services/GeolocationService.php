@@ -1,31 +1,44 @@
 <?php
 
+final class Geolocation implements \JsonSerializable
+{
+	private string $ip;
+	private string $iso2country;
+
+	public function __construct(string $ip, string $iso2country)
+	{
+		//
+	}
+
+	public function jsonSerialize()
+	{
+		return [
+			'ip' => $this->ip,
+			'iso2' => $this->iso2country
+		];
+	}
+}
 class GeolocationService {
 
-	private $providers;
+	private array $providers;
+	private \PSR4\LoggerInterface $logger;
 
-	public function __construct(array $providers) {
+	public function __construct(LoggerInterface $logger, array $providers) {
 		$this->providers = $providers;
 	}
 
-	public function getGeolocationData(): array {
-		$validGeolocationData = array_reduce($this->providers, function ($carry, GeolocationProviderInterface $provider) {
-			if ($carry) {
-				return $carry;
-			}
+	public function getGeolocationData(): GeoLocation {
+		$validGeolocationData = array_reduce($this->providers,
+			function ($carry, GeolocationProviderInterface $provider) {
 			try {
-				return $provider->getGeolocationData();
+				return $carry || $provider->getGeolocationData();
 			} catch (Exception $e) {
-				error_log("Error retrieving geolocation data from provider " . get_class($provider) . ": " . $e->getMessage());
-				// continue to the next provider
+				$this->logger->error($e->getMessage());
 			}
 		}, null);
 
-		if (!$validGeolocationData) {
-			throw new Exception('Unable to get geolocation data from any provider');
-		}
-
-		return $validGeolocationData;
+		if (is_null($validGeolocationData)) throw new GeolocationException('ip');
+		return json_encode($validGeolocationData);
 	}
 
 }
